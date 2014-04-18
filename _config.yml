@@ -12,7 +12,7 @@ language:
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
-url: http://vobject.github.io
+url: http://vobject.github.io/blog
 root: /blog/
 permalink: :year/:month/:day/:title/
 tag_dir: tags
@@ -102,5 +102,5 @@ stylus:
 ## Docs: http://hexo.io/docs/deployment.html
 deploy:
   type: github
-  repository: https://github.com/vobject/vobject.github.com
+  repository: git@github.com:vobject/vobject.github.com.git
   branch: master
