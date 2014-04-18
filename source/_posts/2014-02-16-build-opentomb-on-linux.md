@@ -38,24 +38,24 @@ Choose a directory and clone the OpenTomb source code repository:
 
 1. Start up QtCreator and select `File -> Open File or Project`.
 2. Navigate to your cloned repository directory and open `CMakeLists.txt`.
-{% img /blog/images/build_opentomb/build_opentomb_01.jpeg 'Opening CMakeLists.txt' %}
+{% img /images/build_opentomb/build_opentomb_01.jpeg 'Opening CMakeLists.txt' %}
 3. Choose a build directory. Make sure it is located outside of the repository. The default build directory suggested by QtCreator (e.g. `opentomb-code-build`) is usually just fine.
-{% img /blog/images/build_opentomb/build_opentomb_02.jpeg 'Choosing a build directory' %}
+{% img /images/build_opentomb/build_opentomb_02.jpeg 'Choosing a build directory' %}
 4. Provide CMake with the arguments `-DCMAKE_BUILD_TYPE=Debug` (if you plan to develop) or `-DCMAKE_BUILD_TYPE=Release` (if you just want to run the engine).
 5. Select `Unix Generator` as the generator and click `Run CMake`. This should successfully create a Makefile if the required libraries are installed. Click `Finish`.
-{% img /blog/images/build_opentomb/build_opentomb_03.jpeg 'Configuring CMake' %}
+{% img /images/build_opentomb/build_opentomb_03.jpeg 'Configuring CMake' %}
 6. Hit `Ctrl+B` to start compilation. This can take a while to complete and creates the OpenTomb executable inside the build directory.
-{% img /blog/images/build_opentomb/build_opentomb_04.jpeg 'QtCreator compiles' %}
+{% img /images/build_opentomb/build_opentomb_04.jpeg 'QtCreator compiles' %}
 
 #### Pro tip: faster compilation
 
 Add `-j2` or `-j4` (depending on how many CPU cores you have) into `Projects -> Build & Run -> Build Steps -> Details -> Additional arguments`.
-{% img /blog/images/build_opentomb/build_opentomb_08.jpeg 'Configure parallel compilation jobs' %}
+{% img /images/build_opentomb/build_opentomb_08.jpeg 'Configure parallel compilation jobs' %}
 
 ### Add config files
 
 Extract the files form the OpenTomb binary archive (engine.7z) into the build directory. The important files/directories are: data, save, scripts, VeraMono.ttf, ascII.txt, config.lua.
-{% img /blog/images/build_opentomb/build_opentomb_05.jpeg 'OpenTomb config files' %}
+{% img /images/build_opentomb/build_opentomb_05.jpeg 'OpenTomb config files' %}
 
 ### Add game assets
 
@@ -66,7 +66,7 @@ To get audio, copy `MAIN.SFX`, too.
 ### Final touch
 
 Modify `cvars.game_level` in config.lua to match an existing level file, e.g. `data/tr2/data/WALL.TR2`. Keep in mind, that file paths in Linux are case sensitive.
-{% img /blog/images/build_opentomb/build_opentomb_06.jpeg 'Configure startup game level' %}
+{% img /images/build_opentomb/build_opentomb_06.jpeg 'Configure startup game level' %}
 
 Now you should be able to launch the game using the file browser or from within QtCreator via `Ctrl+R`.
-{% img /blog/images/build_opentomb/build_opentomb_07.jpeg 'Running OpenTomb' %}
+{% img /images/build_opentomb/build_opentomb_07.jpeg 'Running OpenTomb' %}
