@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Build OpenTomb on Linux | vobject</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta content="article" property="og:type">
+<meta content="Build OpenTomb on Linux" property="og:title">
+<meta content="http://vobject.github.io/blog/2014/02/16/build-opentomb-on-linux/" property="og:url">
+<meta content="/images/build_opentomb/build_opentomb_01.jpeg" property="og:image">
+<meta content="vobject" property="og:site_name">
+<meta content="A while ago the OpenTomb developers accepted my contribution that allowed the engine to be compiled under Linux.This was not too hard, since the engine only depends on cross-platform libraries and use" property="og:description">
+<meta content="summary" name="twitter:card">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="http://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">vobject</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">Things on stuff.</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><input type="submit" value="&#xF002;" class="search-form-submit"><input type="hidden" name="q" value="site:http://vobject.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-build-opentomb-on-linux" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2014/02/16/build-opentomb-on-linux/" class="article-date">
+  <time datetime="2014-02-16T04:18:22.000Z" itemprop="datePublished">Feb 16 2014</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Build OpenTomb on Linux
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>A while ago the <a href="https://sourceforge.net/p/opentomb" target="_blank">OpenTomb</a> <a href="http://www.tombraiderforums.com/showthread.php?t=197508" target="_blank">developers</a> accepted my contribution that allowed the engine to be compiled under Linux.<br>This was not too hard, since the engine only depends on cross-platform libraries and uses GCC to <a href="http://www.moddb.com/games/opentomb/tutorials/how-to-compile-opentomb-in-windows-using-codeblocks-ide" target="_blank">compile on Windows</a>. It mainly consisted of a CMake script and a few code fixes.<br>The <a href="https://sourceforge.net/p/opentomb/code/ci/default/tree/CMakeLists.txt" target="_blank">CMake script</a> already contains a very brief explanation on how to compile on the command-line.  </p>
+<p>This post provides a more detailed step-by-step guide to get everything up and running for development on Linux.</p>
+<p><em>Tested with:</em></p>
+<ul>
+<li>Arch Linux</li>
+<li>Latest <a href="https://sourceforge.net/p/opentomb/code" target="_blank">OpenTomb commit</a> as of 20140216</li>
+<li>Latest config files from <a href="http://sourceforge.net/projects/opentomb/files/engine.7z/download" target="_blank">OpenTomb binary archive</a></li>
+</ul>
+<p><em>Requirements:</em></p>
+<ul>
+<li>SDL2 installed <em>(tested with 2.0.1)</em></li>
+<li>zlib installed <em>(tested with 1.2.8)</em></li>
+<li>Mercurial installed <em>(tested with 2.9)</em></li>
+<li>CMake 2.8 installed <em>(tested with 2.8.12)</em></li>
+<li>QtCreator installed <em>(tested with 3.0.1)</em></li>
+<li>Game assets of TombRaider 1-5 <em>(tested with <a href="http://www.gog.com/game/tomb_raider_123" target="_blank">GOG</a> <a href="http://www.gog.com/game/tomb_raider_the_last_revelation_chronicles" target="_blank">version</a>)</em></li>
+</ul>
+<h3 id="Get_the_source_code">Get the source code</h3>
+<p>Choose a directory and clone the OpenTomb source code repository:<br><code>hg clone http://hg.code.sf.net/p/opentomb/code opentomb-code</code></p>
+<h3 id="Compile_using_QtCreator">Compile using QtCreator</h3>
+<ol>
+<li>Start up QtCreator and select <code>File -&gt; Open File or Project</code>.</li>
+<li>Navigate to your cloned repository directory and open <code>CMakeLists.txt</code>.</li>
+</ol>
+<img src="/images/build_opentomb/build_opentomb_01.jpeg" title="Opening CMakeLists.txt">
+
+<ol>
+<li>Choose a build directory. Make sure it is located outside of the repository. The default build directory suggested by QtCreator (e.g. <code>opentomb-code-build</code>) is usually just fine.</li>
+</ol>
+<img src="/images/build_opentomb/build_opentomb_02.jpeg" title="Choosing a build directory">
+
+<ol>
+<li>Provide CMake with the arguments <code>-DCMAKE_BUILD_TYPE=Debug</code> (if you plan to develop) or <code>-DCMAKE_BUILD_TYPE=Release</code> (if you just want to run the engine).</li>
+<li>Select <code>Unix Generator</code> as the generator and click <code>Run CMake</code>. This should successfully create a Makefile if the required libraries are installed. Click <code>Finish</code>.</li>
+</ol>
+<img src="/images/build_opentomb/build_opentomb_03.jpeg" title="Configuring CMake">
+
+<ol>
+<li>Hit <code>Ctrl+B</code> to start compilation. This can take a while to complete and creates the OpenTomb executable inside the build directory.</li>
+</ol>
+<img src="/images/build_opentomb/build_opentomb_04.jpeg" title="QtCreator compiles">
+
+
+<h4 id="Pro_tip:_faster_compilation">Pro tip: faster compilation</h4>
+<p>Add <code>-j2</code> or <code>-j4</code> (depending on how many CPU cores you have) into <code>Projects -&gt; Build &amp; Run -&gt; Build Steps -&gt; Details -&gt; Additional arguments</code>.</p>
+<img src="/images/build_opentomb/build_opentomb_08.jpeg" title="Configure parallel compilation jobs">
+
+
+<h3 id="Add_config_files">Add config files</h3>
+<p>Extract the files form the OpenTomb binary archive (engine.7z) into the build directory. The important files/directories are: data, save, scripts, VeraMono.ttf, ascII.txt, config.lua.</p>
+<img src="/images/build_opentomb/build_opentomb_05.jpeg" title="OpenTomb config files">
+
+
+<h3 id="Add_game_assets">Add game assets</h3>
+<p>Copy game files from the original Tomb Raider games into the corresponding <code>data</code> subdirectory like you would on Windows. E.g. copy all “*.TR2” levels from the Tomb Raider 2 data directory into <code>opentomb-code-build/data/tr2/data</code>.<br>To get audio, copy <code>MAIN.SFX</code>, too.</p>
+<h3 id="Final_touch">Final touch</h3>
+<p>Modify <code>cvars.game_level</code> in config.lua to match an existing level file, e.g. <code>data/tr2/data/WALL.TR2</code>. Keep in mind, that file paths in Linux are case sensitive.</p>
+<img src="/images/build_opentomb/build_opentomb_06.jpeg" title="Configure startup game level">
+
+
+<p>Now you should be able to launch the game using the file browser or from within QtCreator via <code>Ctrl+R</code>.</p>
+<img src="/images/build_opentomb/build_opentomb_07.jpeg" title="Running OpenTomb">
+
+
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Linux/">Linux</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenTomb/">OpenTomb</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/blog/2014/04/19/hexo-recipes/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          hexo-recipes
+        
+      </div>
+    </a>
+  
+  
+    <a href="/blog/2013/03/10/build-stellarium-on-windows/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Build Stellarium on Windows</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/">Linux</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenTomb/">OpenTomb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Stellarium/">Stellarium</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/">hexo</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/04">April 2014</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/02">February 2014</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2013/03">March 2013</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2014/04/19/hexo-recipes/">hexo-recipes</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2014/02/16/build-opentomb-on-linux/">Build OpenTomb on Linux</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2013/03/10/build-stellarium-on-windows/">Build Stellarium on Windows</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2013/03/06/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2014 vobject<br>
+      Powered by <a href="http://zespia.tw/hexo/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+
+<script type="text/javascript" src="/js/script.js"></script>
+  </div>
+</body>
+</html>
