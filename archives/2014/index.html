@@ -73,7 +73,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/blog/2014/04/19/fun-with-cpp-callbacks/">fun-with-cpp-callbacks</a>
+      <a class="article-title" href="/blog/2014/04/19/fun-with-cpp-callbacks/">Fun With C++ Callbacks</a>
     </h1>
   
 
@@ -81,12 +81,217 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <p>I did some experiments with callbacks based on <a href="http://ideone.com/2hC72x" target="_blank">a snippet</a> from <a href="http://ideone.com" target="_blank">ideone.com</a>.</p>
+<figure class="highlight cpp"><figcaption><span>EventManager</span><a href="http://coliru.stacked-crooked.com/a/bf8d9382748da44a" target="_blank">Build&Run</a></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+</pre></td><td class="code"><pre><span class="preprocessor">#include &lt;iostream&gt;</span>
+<span class="preprocessor">#include &lt;vector&gt;</span>
+<span class="preprocessor">#include &lt;string&gt;</span>
+<span class="preprocessor">#include &lt;memory&gt;</span>
+<span class="preprocessor">#include &lt;algorithm&gt;</span>
+<span class="preprocessor">#include &lt;functional&gt;</span>
+
+<span class="keyword">class</span> EventManager
+{
+<span class="keyword">public</span>:
+    <span class="keyword">template</span>&lt;<span class="keyword">class</span> F&gt;
+    <span class="keyword">void</span> AddClient(F client)
+    {
+        clients.emplace_back(<span class="keyword">new</span> EventClient&lt;F&gt;(<span class="built_in">std</span>::move(client)));
+    }
+    
+    <span class="keyword">void</span> Emit()
+    {
+        <span class="built_in">std</span>::for_each(clients.begin(), clients.end(), [](<span class="keyword">auto</span>&amp; client){ client-&gt;Respond(); });
+    }
+    
+<span class="keyword">private</span>:
+    <span class="keyword">struct</span> IEventClient
+    {
+        <span class="keyword">virtual</span> ~IEventClient() { }
+        <span class="keyword">virtual</span> <span class="keyword">void</span> Respond() = <span class="number">0</span>;
+    };
+    
+    <span class="keyword">template</span>&lt;<span class="keyword">class</span> F&gt;
+    <span class="keyword">struct</span> EventClient : IEventClient
+    {
+        F f;
+        EventClient(F&amp;&amp; f) : f(<span class="built_in">std</span>::move(f)) { }
+        <span class="keyword">void</span> Respond() override { f(); }
+    };
+    
+    <span class="built_in">std</span>::<span class="stl_container"><span class="built_in">vector</span>&lt;<span class="built_in">std</span>::unique_ptr&lt;IEventClient&gt;</span>&gt; clients;
+};
+
+<span class="keyword">struct</span> Foo { <span class="keyword">void</span> <span class="keyword">operator</span>()() <span class="keyword">const</span> { <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"Foo\n"</span>; } };
+
+<span class="keyword">struct</span> Bar { <span class="keyword">int</span> <span class="keyword">operator</span>()() { <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"Bar\n"</span>; <span class="keyword">return</span> <span class="number">0</span>; } };
+
+<span class="keyword">struct</span> Baz
+{
+    Baz() { id = ID++; obj_valid = <span class="keyword">true</span>; <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"ctor(id="</span> &lt;&lt; id &lt;&lt; <span class="string">")\n"</span>; };
+    ~Baz() { <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"dtor(id="</span> &lt;&lt; id &lt;&lt; <span class="string">")\n"</span>; obj_valid = <span class="keyword">false</span>; };
+    
+    <span class="comment">//Baz(const Baz&amp; b) { id = b.id; obj_valid = b.obj_valid; std::cout &lt;&lt; "cctor(id=" &lt;&lt; id &lt;&lt; ")\n"; };</span>
+    Baz(Baz&amp;&amp; b) { id = <span class="built_in">std</span>::move(b.id); obj_valid = <span class="built_in">std</span>::move(b.obj_valid); b.id = -<span class="number">1</span>; b.obj_valid = <span class="keyword">false</span>; <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"mctor(id="</span> &lt;&lt; id &lt;&lt; <span class="string">")\n"</span>; };
+    
+    Baz(<span class="keyword">const</span> Baz&amp; b) = <span class="keyword">delete</span>;
+    Baz&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> Baz&amp;) = <span class="keyword">delete</span>;
+    
+    <span class="keyword">void</span> f(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; s) <span class="keyword">const</span> { <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"Baz::f(\""</span> &lt;&lt; s &lt;&lt; <span class="string">"\", id="</span> &lt;&lt; id &lt;&lt; <span class="string">", obj_valid="</span> &lt;&lt; obj_valid &lt;&lt; <span class="string">")\n"</span>; }    
+    
+    <span class="keyword">static</span> <span class="keyword">int</span> ID;
+    <span class="keyword">int</span> id{-<span class="number">1</span>};
+    <span class="keyword">bool</span> obj_valid{<span class="keyword">false</span>};
+};
+
+<span class="keyword">int</span> Baz::ID;
+
+
+<span class="keyword">int</span> main()
+{
+    EventManager eventMan;
+
+    eventMan.AddClient([]{ <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"lambda\n"</span>; });
+    eventMan.AddClient(<span class="built_in">std</span>::bind([](<span class="keyword">int</span> i){ <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"lambda+bind\n"</span>; }, <span class="number">1234</span>));
+    
+    <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>()&gt; f1 = []{ <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"std::function\n"</span>; };
+    eventMan.AddClient(f1);
+    
+    <span class="built_in">std</span>::function&lt;<span class="keyword">double</span>(<span class="keyword">double</span>)&gt; f2 = [](<span class="keyword">double</span> d){ <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"std::function+bind\n"</span>; <span class="keyword">return</span> d;};
+    eventMan.AddClient(<span class="built_in">std</span>::bind(f2, <span class="number">.5</span>));
+    
+    eventMan.AddClient(Foo());
+    eventMan.AddClient(Bar());
+
+    eventMan.AddClient(<span class="built_in">std</span>::bind(&amp;Baz::f, Baz(), <span class="string">"baz_t"</span>)); <span class="comment">// ctor and move</span>
+    eventMan.AddClient(<span class="built_in">std</span>::bind(&amp;Baz::f, <span class="built_in">std</span>::make_shared&lt;Baz&gt;(), <span class="string">"baz_p"</span>)); <span class="comment">// same with shared_ptr</span>
+
+    {
+        <span class="comment">//Baz baz; // ctor</span>
+        <span class="comment">//eventMan.AddClient(std::bind(&amp;Baz::f, baz, "baz_o")); // copy ctor and move</span>
+    }
+    
+    {
+        Baz baz;
+        eventMan.AddClient(<span class="built_in">std</span>::bind(&amp;Baz::f, <span class="built_in">std</span>::move(baz), <span class="string">"baz_m"</span>)); <span class="comment">// invokes copy ctor</span>
+    }
+    
+    {
+        Baz baz;
+        eventMan.AddClient(<span class="built_in">std</span>::bind(&amp;Baz::f, <span class="built_in">std</span>::ref(baz), <span class="string">"baz_r"</span>)); <span class="comment">// no copy, goes out of scope, UB</span>
+    }
+    
+    eventMan.Emit();
+}
+</pre></td></tr></table></figure>
+
+
       
     </div>
     <footer class="article-footer">
       
       
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C++/">C++</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C++14/">C++14</a></li></ul>
+
     </footer>
   </div>
   
@@ -131,7 +336,7 @@
 <h3 id="Deploying">Deploying</h3>
 <p>There is no local <code>master</code> branch. All work is done inside the local <code>source</code> branch.<br>Test changes locally, commit and push them to upstream. Then deploy the generated content:</p>
 <figure class="highlight [bash]"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$&gt;</span> hexo deploy
+</pre></td><td class="code"><pre><span class="variable">$&gt;</span> hexo generate && hexo deploy
 </pre></td></tr></table></figure>
 
 <p>This will push the generated content to the upstream <code>master</code> branch. The deployment process will push to the repository specified inside <code>_config.yml</code>. The repository URL may be SSH.</p>
@@ -261,7 +466,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/">Linux</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenTomb/">OpenTomb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Stellarium/">Stellarium</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/">hexo</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C++/">C++</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C++14/">C++14</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/">Linux</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenTomb/">OpenTomb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Stellarium/">Stellarium</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/">hexo</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -282,7 +487,7 @@
       <ul>
         
           <li>
-            <a href="/blog/2014/04/19/fun-with-cpp-callbacks/">fun-with-cpp-callbacks</a>
+            <a href="/blog/2014/04/19/fun-with-cpp-callbacks/">Fun With C++ Callbacks</a>
           </li>
         
           <li>
