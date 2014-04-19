@@ -23,6 +23,6 @@ The server detects most modifications made to posts/themes and regenerates on th
 There is no local `master` branch. All work is done inside the local `source` branch.  
 Test changes locally, commit and push them to upstream. Then deploy the generated content:
 ``` [bash]
-$> hexo deploy
+$> hexo generate && hexo deploy
 ```
 This will push the generated content to the upstream `master` branch. The deployment process will push to the repository specified inside `_config.yml`. The repository URL may be SSH.
