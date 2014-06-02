@@ -59,6 +59,107 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-nightly-builds-with-sourceforge-and-drone-part-1" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2014/05/29/nightly-builds-with-sourceforge-and-drone-part-1/" class="article-date">
+  <time datetime="2014-05-29T17:25:23.000Z" itemprop="datePublished">May 29 2014</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/blog/2014/05/29/nightly-builds-with-sourceforge-and-drone-part-1/">Nightly Builds with Sourceforge and Drone (Part 1)</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>This post lays the groundwork for some future tutorials on the topics of continuous integration, cross compilation and binary deployment. I will discuss each topic in greater detail but first give a high level overview about the scenario, the goal and how it is pursued. Some parameters of the scenario are very specific (e.g. using Sourceforge, Drone, and Mercurial), others may be adaptable to completely different problems.</p>
+<p>In case the title seems too vague, here is a look at the original (more precise) title:<br><strong><em>Providing Nightly Builds of Windows Binaries though Cross Compilation on Ubuntu for Open Source Projects hosted on SourceForge using the Drone Coninuous Integration Service through a Proxy Project on BitBucket.</em></strong></p>
+<h1 id="Scenario">Scenario</h1>
+<ol>
+<li>Our existing project <strong>ci-test</strong> is hosted on <a href="https://sourceforge.net/" target="_blank">Sourceforge</a>.</li>
+<li><strong>ci-test</strong> uses <a href="https://sourceforge.net/p/forge/documentation/Mercurial/" target="_blank">Mercurial</a> for revision control and gets new commits pushed every few days.</li>
+<li><strong>ci-test</strong> depends only on cross platform libraries.</li>
+<li><strong>ci-test</strong> is open source.</li>
+</ol>
+<h5 id="A_word_about_SourceForge">A word about SourceForge</h5>
+<p>Before we start: in my opinion SF is pretty much obsolete for new open source projects. DVCSs have taken over the OSS world in recent years and are not going away anytime soon. SF was too late to offer them as alternatives to their tool of choice Subversion. Even now, SF’s integration of Git and Mercurial is laughable. SF does not support most cool features hosting providers such as <a href="https://github.com/" target="_blank">GitHub</a> and <a href="https://bitbucket.org/" target="_blank">BitBucket</a> introduced in the last years. On top of that, it is usually not supported by services (most notably continuous integration) building on top of modern hosters.</p>
+<p>Having said that, SF still has a few important points in its favor: it offers users shell access to their account and their repositories. And it tolerates uploading large binary files for distribution, a use case that <a href="https://github.com/blog/1302-goodbye-uploads" target="_blank">other</a> <a href="https://help.github.com/articles/what-is-my-disk-quota" target="_blank">services</a> <a href="https://help.github.com/articles/distributing-large-binaries" target="_blank">still</a> <a href="http://stackoverflow.com/questions/10346370/what-is-the-best-practice-of-distributing-binaries-from-a-github-project" target="_blank">struggle</a> <a href="https://github.com/blog/1547-release-your-software" target="_blank">with</a>. This tutorial will make use of both of these features.</p>
+<p>So, why SF? For the ease of argument, let us assume we are dealing with an existing project (you would not host a new project on SF, would ya?), and that migrating is not an option. In case the project is hosted on GitHub or BitBucket, some of the hurdles go away (e.g. proxy project). However, we would still use SF for deployment of binary artifacts.</p>
+<h1 id="Goal">Goal</h1>
+<ol>
+<li>A build artifact should be created for new commits pushed to the SF repository.</li>
+<li>The artifact should contain the project’s binary for Windows.</li>
+<li>The artifact should appear in the <em>Files</em> section on the SF project page.</li>
+<li>We only want artifacts for the <em>default</em> branch (or <em>master</em> branch in git).</li>
+<li>We do not want to spend money.</li>
+</ol>
+<p>So the goal is to provide <a href="http://en.wikipedia.org/wiki/Nightly_builds" target="_blank">nightly builds</a> for our project and make them publicly available. The thing about providing Windows binaries is to incorporate the cross compilation step into our journey. Since the continuous integration service builds on Linux, this is another challenge. Also, I have not yet come accross a free build service running Windows. Providing binaries for Linux would be much easier (and a bit pointless).</p>
+<h1 id="Workflow">Workflow</h1>
+<p>The development/distribution workflow we want looks like this:</p>
+<ol>
+<li><em>Developer A</em> pushes new commits to the default branch.</li>
+<li><em>Developer A</em> gets an email containing a link.<br>2.1 If <em>A</em> clicks the link, a nightly build is triggered and an new artifact appears a few minutes later.<br>2.2 If <em>A</em> ignores the email, nothing happens.</li>
+</ol>
+<p>This approach is mostly automated but still gives the developer the choice not to provide a build artifact for his latest updates. I think this is a reasonable workflow for open source projects, whose default/master branch is not always as stable as it should be.</p>
+<p>The following figure outlines the workflow and provides some more technical information about the actors and their relationships.</p>
+<img src="/images/nightly-builds-with-sourceforge-and-drone/workflow.svg" title="Workflow showing actors and relationships">
+
+
+<ol>
+<li>The developer pushes to the repo.</li>
+<li>The developer receives an email with a link.</li>
+<li>The developer clicks the link and starts a build.</li>
+<li>The bash build script (running on Ubuntu 12.04) clones the repository from SF and sets up everything else it needs for building. It compiles the code and creates the artifacts (e.g. compress binary and config files into a single archive).</li>
+<li>The script then uploads the artifacts into the designated SF project section. Settings up the authentification is a key task for making the process work and will be covered later.</li>
+</ol>
+<h1 id="Setting_things_up">Setting things up</h1>
+<p>This section lists the major tasks to set up the workflow described. It serves as a high level tl;dr and should be enough for someone familiar with the technology and services involved. Everyone else will have to wait for the second part of this tutorial.</p>
+<ul>
+<li>Create and account for <a href="https://bitbucket.org/" target="_blank">BitBucket</a> and <a href="https://drone.io/" target="_blank">Drone</a> if you do not have one yet.</li>
+<li>Create a proxy project on BitBucket, e.g. <strong>ci-test-nightly</strong>. SF itself is not supported by Drone, so the purpose of this proxy project is just to be able to create a new build project on Drone.</li>
+<li>Login to Drone and create a ‘New Project’ based on <strong>ci-nightly</strong> from BitBucket.</li>
+<li>Enter ‘default’ into the <em>Settings -&gt; Repository -&gt; Branch Filter</em></li>
+<li>Register the projects SSH key from <em>Settings -&gt; Repository -&gt; View Key</em> at your SF account.</li>
+<li>Create a folder ‘NightlyBuilds’ inside the project’s files section via the SF shell.</li>
+<li>Copy the <em>Settings -&gt; Repository -&gt; Build Hook</em> link and create a Mercurial hook via the SF shell to send out an email containing this link to developers.</li>
+<li>Write the clone &amp; build &amp; upload script into the <em>Settings -&gt; Commands</em> text box.</li>
+</ul>
+<h1 id="Notes_&amp;_Risks">Notes &amp; Risks</h1>
+<ul>
+<li>SourceForge took quite some time (hours) until the newly registered SSH key was accepted.</li>
+<li>Drone is still in Beta and may change considerably in the future. This may lead to alterations to the service that renders these instructions useless.</li>
+<li>Although I only talked about BitBucket and Drone, it should be possible to replace each of them with GitHub or Travic-CI. I have not done it, but do not see technical problems standing in the way.</li>
+</ul>
+<h1 id="Future">Future</h1>
+<p>The next part(s) will go into cross compilation on the Drone applience and how to configure SF through shell access.</p>
+<h1 id="Reference">Reference</h1>
+<p><a href="http://en.wikipedia.org/wiki/Comparison_of_continuous_integration_software" target="_blank">Comparison of continuous integration software</a><br><a href="http://blog.testnoir.com/ciaas-roundup-11-hosted-continuous-integration-services/" target="_blank">CIaaS roundup: 11 hosted continuous integration services</a><br><a href="http://sourceforge.net/apps/trac/sourceforge/wiki/Release%20files%20for%20download" target="_blank">SourceForge: Release Files for Download (FRS)</a><br><a href="https://sourceforge.net/apps/trac/sourceforge/wiki/Disk%20quotas" target="_blank">SourceForge: Service quotas</a><br><a href="https://sourceforge.net/apps/trac/sourceforge/ticket/5480" target="_blank">SourceForge: Trust issues with Mercurial project-based hgrc</a><br><a href="http://docs.drone.io/" target="_blank">Drone Documentation</a><br><a href="http://vimeo.com/96136521" target="_blank">Drone CI - Philly DevOps May 2014</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <a href="http://vobject.github.io/blog/2014/05/29/nightly-builds-with-sourceforge-and-drone-part-1/#disqus_thread" class="article-comment-link">Comments</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Continuous Integration/">Continuous Integration</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Drone/">Drone</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Nightly Builds/">Nightly Builds</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Sourceforge/">Sourceforge</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-fun-with-cpp-callbacks" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/blog/2014/04/19/fun-with-cpp-callbacks/" class="article-date">
@@ -470,7 +571,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C++/">C++</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C++14/">C++14</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/">Linux</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenTomb/">OpenTomb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Stellarium/">Stellarium</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/">hexo</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C++/">C++</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C++14/">C++14</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Continuous Integration/">Continuous Integration</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Drone/">Drone</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/">Linux</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Nightly Builds/">Nightly Builds</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenTomb/">OpenTomb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sourceforge/">Sourceforge</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Stellarium/">Stellarium</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/">hexo</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -479,7 +580,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/04">April 2014</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/02">February 2014</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2013/03">March 2013</a><span class="archive-list-count">2</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/05">May 2014</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/04">April 2014</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/02">February 2014</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2013/03">March 2013</a><span class="archive-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -489,6 +590,10 @@
     <h3 class="widget-title">Recents</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/blog/2014/05/29/nightly-builds-with-sourceforge-and-drone-part-1/">Nightly Builds with Sourceforge and Drone (Part 1)</a>
+          </li>
         
           <li>
             <a href="/blog/2014/04/19/fun-with-cpp-callbacks/">Fun With C++ Callbacks</a>
@@ -504,10 +609,6 @@
         
           <li>
             <a href="/blog/2013/03/10/build-stellarium-on-windows/">Build Stellarium on Windows</a>
-          </li>
-        
-          <li>
-            <a href="/blog/2013/03/06/hello-world/">Hello World</a>
           </li>
         
       </ul>
