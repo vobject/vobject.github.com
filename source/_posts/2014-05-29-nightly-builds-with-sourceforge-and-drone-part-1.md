@@ -66,7 +66,7 @@ The following figure outlines the workflow and provides some more technical info
 
 This section lists the major tasks to set up the workflow described. It serves as a high level tl;dr and should be enough for someone familiar with the technology and services involved. Everyone else will have to wait for the second part of this tutorial.
 
-- Create and account for [BitBucket](https://bitbucket.org/) and [Drone](https://drone.io/) if you do not have one yet.
+- Create an account for [BitBucket](https://bitbucket.org/) and [Drone](https://drone.io/) if you do not have one yet.
 - Create a proxy project on BitBucket, e.g. **ci-test-nightly**. SF itself is not supported by Drone, so the purpose of this proxy project is just to be able to create a new build project on Drone.
 - Login to Drone and create a 'New Project' based on **ci-nightly** from BitBucket.
 - Enter 'default' into the *Settings -> Repository -> Branch Filter*
